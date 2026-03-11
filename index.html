@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karbala To Today</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000; --card: #121212; --text: #ffffff; --muted: #888888;
+            --red: #d90429; --gold: #ffb703; --border: #222222;
+        }
+        .light-theme {
+            --bg: #f8f9fa; --card: #ffffff; --text: #000000; --muted: #666666;
+            --border: #dddddd;
+        }
+
+        * { box-sizing: border-box; transition: 0.3s; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; }
+
+        /* Theme Toggle */
+        .theme-toggle { position: absolute; top: 20px; right: 20px; cursor: pointer; background: var(--card); border: 1px solid var(--border); padding: 8px 15px; border-radius: 50px; font-size: 0.8rem; color: var(--text); }
+
+        .brand { text-align: center; padding: 50px 0 10px; font-size: 0.9rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+        .red-dot { color: var(--red); font-weight: bold; }
+
+        /* Ayat Card */
+        .ayat-card { 
+            background: var(--card); border: 1px solid var(--red); border-radius: 20px; 
+            width: 90%; max-width: 500px; margin: 20px auto; padding: 25px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .ayat-ara { font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--text); margin-bottom: 15px; line-height: 1.8; }
+        .ayat-urd { font-family: 'Noto Nastaliq Urdu', serif; font-size: 1rem; color: var(--gold); line-height: 2; }
+
+        /* Tabs & Search */
+        .tabs { display: flex; gap: 8px; justify-content: center; margin: 20px 0; overflow-x: auto; padding: 0 10px; }
+        .tab { background: var(--card); border: 1px solid var(--border); color: var(--muted); padding: 8px 18px; border-radius: 50px; font-size: 0.8rem; cursor: pointer; }
+        .tab.active { background: var(--red); color: white; border-color: var(--red); }
+
+        .search-box { width: 90%; max-width: 500px; margin: 0 auto 30px; display: block; padding: 15px 25px; border-radius: 50px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none; }
+
+        /* List */
+        .dua-list { width: 90%; max-width: 600px; margin: 0 auto 100px; display: flex; flex-direction: column; gap: 12px; }
+        .dua-card { 
+            background: var(--card); padding: 20px; border-radius: 15px; border-left: 4px solid var(--red);
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+        }
+        .dua-card h3 { margin: 0; font-family: 'Noto Nastaliq Urdu', serif; font-size: 1.2rem; }
+
+        /* Reader Page */
+        .reader { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 100; overflow-y: auto; padding: 20px; }
+        .reader.active { display: block; }
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .content { text-align: center; max-width: 700px; margin: auto; padding-bottom: 150px; }
+        .v-ara { font-family: 'Amiri', serif; font-size: 2.2rem; line-height: 2.5; margin-bottom: 40px; }
+        .v-urd { font-family: 'Noto Nastaliq Urdu', serif; font-size: 1.4rem; line-height: 2.5; color: var(--muted); }
+
+        /* Player */
+        .player-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #111; padding: 10px; border-radius: 50px; display: none; border: 1px solid #333; }
+        audio { width: 100%; filter: invert(1); }
+
+        /* Admin */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
+        .admin-panel { display: none; padding: 20px; max-width: 600px; margin: auto; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; background: #111; border: 1px solid #333; color: white; border-radius: 8px; }
+        .btn { background: var(--red); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
+
+        footer { text-align: center; padding: 40px; color: var(--muted); cursor: pointer; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div id="home-page">
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+        <div class="brand">From <span class="red-dot">Karbala</span> to Today</div>
+        
+        <div class="ayat-card">
+            <div id="ay-ara" class="ayat-ara">...</div>
+            <div id="ay-urd" class="ayat-urd">...</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="filter('All', this)">All</div>
+            <div class="tab" onclick="filter('Dua', this)">Duas</div>
+            <div class="tab" onclick="filter('Ziyarat', this)">Ziyarat</div>
+            <div class="tab" onclick="filter('Hadees', this)">Hadees</div>
+        </div>
+
+        <input type="text" class="search-box" id="search" placeholder="Search..." oninput="render()">
+
+        <div id="list" class="dua-list"></div>
+
+        <footer onclick="showLogin()">DESIGNED BY ZAIGHAM ABBAS</footer>
+    </div>
+
+    <div id="reader" class="reader">
+        <div class="nav">
+            <button onclick="closeReader()" style="background:none; border:none; color:var(--text); font-size: 1.2rem;">← Back</button>
+            <b id="v-title"></b>
+            <div></div>
+        </div>
+        <div class="content">
+            <div id="v-ara" class="v-ara"></div>
+            <div id="v-urd" class="v-urd"></div>
+        </div>
+        <div id="p-bar" class="player-bar">
+            <audio id="audio" controls></audio>
+        </div>
+    </div>
+
+    <div id="login" class="modal" style="display: none;">
+        <div style="background: #111; padding: 30px; border-radius: 20px; width: 300px; text-align: center; border: 1px solid var(--red);">
+            <h3 style="color:white">Admin Access</h3>
+            <input type="password" id="pass" placeholder="Password">
+            <button class="btn" onclick="login()">Login</button>
+            <p onclick="this.parentElement.parentElement.style.display='none'" style="color:#444; margin-top:10px; cursor:pointer">Cancel</p>
+        </div>
+    </div>
+
+    <div id="dash" class="admin-panel">
+        <h2 class="red-dot">Admin Dashboard</h2>
+        <div style="background: #111; padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+            <h4>Add New Content</h4>
+            <select id="in-cat"><option>Dua</option><option>Ziyarat</option><option>Hadees</option></select>
+            <input type="text" id="in-n" placeholder="Title">
+            <textarea id="in-a" rows="4" placeholder="Arabic"></textarea>
+            <textarea id="in-u" rows="4" placeholder="Urdu"></textarea>
+            <input type="text" id="in-aud" placeholder="Audio Link (MP3 URL)">
+            <button class="btn" onclick="save()">Add Content</button>
+        </div>
+
+        <div style="background: #111; padding: 15px; border-radius: 15px;">
+            <h4>Update Ayat of Day</h4>
+            <input type="text" id="ay-in-a" placeholder="Arabic">
+            <input type="text" id="ay-in-u" placeholder="Urdu">
+            <button class="btn" onclick="saveAy()">Update Ayat</button>
+        </div>
+
+        <div id="manage-list" style="margin-top: 20px;"></div>
+        <button class="btn" style="background:#222; margin-top:20px" onclick="location.reload()">Exit Admin</button>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('karbala_db')) || [];
+        let ay = JSON.parse(localStorage.getItem('karbala_ay')) || { a: "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", u: "اللہ کے نام سے شروع" };
+        let currentFilter = 'All';
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
+        }
+
+        function filter(cat, el) {
+            currentFilter = cat;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            render();
+        }
+
+        function render() {
+            const q = document.getElementById('search').value.toLowerCase();
+            const list = document.getElementById('list');
+            const mList = document.getElementById('manage-list');
+            list.innerHTML = ""; mList.innerHTML = "<h4>Manage Existing</h4>";
+
+            db.forEach((item, i) => {
+                if((currentFilter === 'All' || item.cat === currentFilter) && item.n.toLowerCase().includes(q)) {
+                    list.innerHTML += `<div class="dua-card" onclick="openReader(${i})">
+                        <div><small style="color:var(--red)">${item.cat}</small><h3>${item.n}</h3></div>
+                        <span>→</span>
+                    </div>`;
+                }
+                mList.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; background:#000; margin-bottom:5px; border-radius:5px">
+                    ${item.n} <span style="color:red; cursor:pointer" onclick="del(${i})">Delete</span>
+                </div>`;
+            });
+            document.getElementById('ay-ara').innerText = ay.a;
+            document.getElementById('ay-urd').innerText = ay.u;
+        }
+
+        function save() {
+            const n = document.getElementById('in-n').value;
+            const a = document.getElementById('in-a').value;
+            const u = document.getElementById('in-u').value;
+            const cat = document.getElementById('in-cat').value;
+            const aud = document.getElementById('in-aud').value;
+            if(!n || !a) return alert("Fill all fields");
+            db.push({n, a, u, cat, aud});
+            localStorage.setItem('karbala_db', JSON.stringify(db));
+            render(); alert("Added!");
+        }
+
+        function saveAy() {
+            ay.a = document.getElementById('ay-in-a').value;
+            ay.u = document.getElementById('ay-in-u').value;
+            localStorage.setItem('karbala_ay', JSON.stringify(ay));
+            render(); alert("Ayat Updated!");
+        }
+
+        function del(i) {
+            if(confirm("Delete?")) { db.splice(i,1); localStorage.setItem('karbala_db', JSON.stringify(db)); render(); }
+        }
+
+        function openReader(i) {
+            const item = db[i];
+            document.getElementById('v-title').innerText = item.n;
+            document.getElementById('v-ara').innerText = item.a;
+            document.getElementById('v-urd').innerText = item.u;
+            const p = document.getElementById('p-bar');
+            if(item.aud) { p.style.display = 'block'; document.getElementById('audio').src = item.aud; }
+            else { p.style.display = 'none'; }
+            document.getElementById('reader').classList.add('active');
+        }
+
+        function closeReader() {
+            document.getElementById('reader').classList.remove('active');
+            document.getElementById('audio').pause();
+        }
+
+        function showLogin() { document.getElementById('login').style.display = 'flex'; }
+        
+        function login() {
+            if(document.getElementById('pass').value === "karbala786") {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('home-page').style.display = 'none';
+                document.getElementById('dash').style.display = 'block';
+            } else { alert("Wrong Password!"); }
+        }
+
+        render();
+    </script>
+</body>
+</html>
+
+  
